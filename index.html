@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Matriz del Destino</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* (Aquí va el mismo CSS que antes, no lo repito para abreviar) */
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg,#021226,#06122a);
+      color: #e6eef8;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+    .container {
+      max-width: 960px;
+      margin: auto;
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 12px;
+      box-sizing: border-box;
+    }
+    label {
+      font-size: 1rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+    input[type="date"],
+    button {
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+      transition: background-color 0.3s ease;
+    }
+    button {
+      background: #7dd3fc;
+      color: #052022;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+    button:hover,
+    button:focus {
+      background: #5bbbe0;
+      outline: none;
+    }
+    .results {
+      margin-top: 20px;
+    }
+    h2, h3 {
+      font-size: 1.4rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.8rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      overflow-x: auto;
+      display: block;
+    }
+    thead {
+      background: rgba(255,255,255,0.1);
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+    tbody {
+      display: block;
+      max-height: 300px;
+      overflow-y: auto;
+      width: 100%;
+      table-layout: fixed;
+    }
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      vertical-align: top;
+      word-wrap: break-word;
+      display: table-cell;
+      width: 20%;
+      text-align: left;
+    }
+    small {
+      font-weight: normal;
+      color: #a0a8b9;
+    }
+    #core p {
+      font-size: 1rem;
+      margin: 8px 0;
+    }
+    #narrative {
+      margin-top: 1rem;
+      font-size: 1rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+      .container {
+        padding: 15px;
+        border-radius: 10px;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      input[type="date"],
+      button {
+        font-size: 1.1rem;
+        padding: 14px 18px;
+      }
+      table thead, table tbody {
+        display: block;
+      }
+      table th, table td {
+        width: auto;
+        display: block;
+        border-bottom: none;
+        padding-left: 50%;
+        position: relative;
+        text-align: left;
+      }
+      table th::before,
+      table td::before {
+        position: absolute;
+        left: 12px;
+        width: 45%;
+        white-space: nowrap;
+        font-weight: bold;
+        color: #a0a8b9;
+        content: attr(data-label);
+        text-align: left;
+      }
+      table tr {
+        margin-bottom: 12px;
+        display: block;
+        border-bottom: 2px solid rgba(255,255,255,0.1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Matriz del Destino</h1>
+  <div class="container">
+    <label for="dateInput">Fecha de nacimiento</label>
+    <input type="date" id="dateInput" min="1900-01-01" max="2099-12-31" />
+    <button id="calcBtn">Calcular Matriz</button>
+
+    <div class="results" id="results" style="display:none">
+      <h2>Resultados</h2>
+      <div id="core"></div>
+
+      <h3>Tabla de 21 Posiciones</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Etiqueta</th><th>Valor (Raw)</th><th>Significado</th><th>Interpretación</th>
+          </tr>
+        </thead>
+        <tbody id="matrixTable"></tbody>
+      </table>
+
+      <h3>Narrativa</h3>
+      <div id="narrative"></div>
+    </div>
+  </div>
+
+<script>
+  // Define la función principal fuera de window para evitar conflictos
+  function calculate() {
+    console.log("Función calculate disparada"); // para debug en consola
+
+    const val = document.getElementById("dateInput").value;
+    if (!val) { alert("Introduce una fecha"); return; }
+
+    const [yyyy, mm, dd] = val.split("-").map(n => Number(n));
+    let yearDigitsSum = String(yyyy).split("").reduce((a, b) => a + Number(b), 0);
+    let yearReduced = reduceNumber(yearDigitsSum);
+
+    const sum1 = dd + mm, sum2 = dd + yearReduced, sum3 = mm + yearReduced, sum4 = dd + mm + yearReduced;
+
+    const matrixRaw = {
+      1: dd, 2: mm, 3: yearReduced, 4: sum1, 5: sum2, 6: sum3, 7: sum4,
+      8: dd + sum1, 9: mm + sum2, 10: yearReduced + sum3, 11: sum1 + sum4,
+      12: sum2 + sum3, 13: sum3 + sum4, 14: dd + sum2, 15: mm + sum4,
+      16: yearReduced + sum1, 17: sum1 + sum2, 18: sum2 + sum4,
+      19: sum3 + sum1, 20: sum4 + sum2, 21: dd + mm + yearReduced + sum4
+    };
+
+    const matrix = {};
+    for (let i = 1; i <= 21; i++) {
+      const reduced = reduceNumber(matrixRaw[i]);
+      matrix[i] = {
+        Raw: matrixRaw[i],
+        Value: reduced,
+        Label: positionLabel(i),
+        Meaning: numberMeanings[reduced] || "Significado no definido.",
+        Interpretation: positionInterpretation(i, reduced)
+      };
+    }
+
+    const core = {
+      Misión: matrix[1].Value,
+      Karma: matrix[5].Value,
+      Talentos: [matrix[2].Value, matrix[3].Value],
+      Destino: matrix[10].Value
+    };
+
+    const narrative = `Tu misión es ${core.Misión} (${numberMeanings[core.Misión]}).
+Tu aprendizaje kármico es ${core.Karma} (${numberMeanings[core.Karma]}).
+Tus talentos principales son ${core.Talentos.join(" y ")} (${core.Talentos.map(t => numberMeanings[t]).join(" y ")}).
+Tu destino te guía hacia ${core.Destino} (${numberMeanings[core.Destino]}).`;
+
+    const matrixTable = document.getElementById("matrixTable");
+    matrixTable.innerHTML = "";
+    for (let i = 1; i <= 21; i++) {
+      const row = matrix[i];
+      matrixTable.innerHTML += `
+      <tr>
+        <td data-label="#">${i}</td>
+        <td data-label="Etiqueta">${row.Label}</td>
+        <td data-label="Valor (Raw)">${row.Value} <small>(${row.Raw})</small></td>
+        <td data-label="Significado">${row.Meaning}</td>
+        <td data-label="Interpretación">${row.Interpretation}</td>
+      </tr>`;
+    }
+
+    document.getElementById("core").innerHTML = `
+    <p><b>Misión:</b> ${core.Misión} → ${numberMeanings[core.Misión]}</p>
+    <p><b>Karma:</b> ${core.Karma} → ${numberMeanings[core.Karma]}</p>
+    <p><b>Talentos:</b> ${core.Talentos.join(" y ")} → ${core.Talentos.map(t => numberMeanings[t]).join(" y ")}</p>
+    <p><b>Destino:</b> ${core.Destino} → ${numberMeanings[core.Destino]}</p>
+    `;
+
+    document.getElementById("narrative").textContent = narrative;
+
+    document.getElementById("results").style.display = "block";
+  }
+
+  // Resto de funciones y datos:
+
+  const numberMeanings = {
+    1: "Independencia, liderazgo, iniciativa.",
+    2: "Cooperación, sensibilidad, dualidad.",
+    3: "Creatividad, comunicación, autoexpresión.",
+    4: "Disciplina, orden, estabilidad.",
+    5: "Cambio, libertad, aventura.",
+    6: "Responsabilidad, familia, amor.",
+    7: "Espiritualidad, introspección, sabiduría.",
+    8: "Éxito material, poder, ambición.",
+    9: "Humanitarismo, compasión, cierre de ciclos.",
+    10: "Fluidez, adaptabilidad, nuevos comienzos.",
+    11: "Intuición elevada, espiritualidad, inspiración.",
+    12: "Sacrificio, servicio, empatía.",
+    13: "Transformación, aprendizajes kármicos, trabajo.",
+    14: "Adaptación, libertad con límites.",
+    15: "Amor profundo, magnetismo, pasión.",
+    16: "Sanación interior, pruebas espirituales.",
+    17: "Éxito, confianza, reconocimiento.",
+    18: "Compasión, ayuda a los demás, destino colectivo.",
+    19: "Poder personal, responsabilidad, independencia.",
+    20: "Renacimiento, cambio profundo, misión colectiva.",
+    21: "Plenitud, armonía, conexión universal.",
+    22: "Maestro constructor, legado, servicio a la humanidad."
+  };
+
+  function positionLabel(pos) {
+    const labels = {
+      1: "Vitalidad", 2: "Relaciones", 3: "Talento creativo", 4: "Disciplina",
+      5: "Karma principal", 6: "Familia/Amor", 7: "Espiritualidad", 8: "Éxito material",
+      9: "Sabiduría/Servicio", 10: "Destino", 11: "Misión espiritual", 12: "Pareja kármica",
+      13: "Disciplina kármica", 14: "Libertad/Límites", 15: "Amor profundo", 16: "Sanación interior",
+      17: "Liderazgo", 18: "Compasión", 19: "Poder/Responsabilidad", 20: "Transformación", 21: "Plenitud"
+    };
+    return labels[pos] || "";
+  }
+
+  function positionInterpretation(pos, value) {
+    return `En tu posición de ${positionLabel(pos)}, el número ${value} indica: ${numberMeanings[value]}`;
+  }
+
+  function reduceNumber(n) {
+    n = Number(n);
+    if (isNaN(n) || n <= 0) return 0;
+    if ([11, 22].includes(n)) return n;
+    while (n > 22) {
+      n = String(n).split("").reduce((a, b) => a + Number(b), 0);
+    }
+    return n;
+  }
+
+  // Esperar a que DOM cargue para asignar evento
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('calcBtn').addEventListener('click', calculate);
+  });
+</script>
+</body>
+</html>
